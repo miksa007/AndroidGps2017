@@ -7,10 +7,17 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 
 /**
  * TEstaillaan GPS-moduulin toimintaa. Lähteinä mm:
@@ -19,60 +26,42 @@ import android.widget.Toast;
  *
  *
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     private final String TAG="MainActivity";
     private Context context;
     private static final String[] PERMISSIONS_LOCATION = {Manifest.permission.ACCESS_FINE_LOCATION};
+
+    private GoogleApiClient mGoogleApiClient;
+    private Location mLastLocation;
+    protected String mLatitudeLabel;
+    protected String mLongitudeLabel;
+    protected TextView mLatitudeText;
+    protected TextView mLongitudeText;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //toast kayttoo varten
-        context = getApplicationContext();
+        // Create an instance of GoogleAPIClient.
+        mLatitudeLabel = getResources().getString(R.string.latitude_label);
+        mLongitudeLabel = getResources().getString(R.string.longitude_label);
+        mLatitudeText = (TextView) findViewById((R.id.latitude_text));
+        mLongitudeText = (TextView) findViewById((R.id.longitude_text));
 
-        LocationManager locationManager=(LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        LocationListener locationListener=new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                Log.d(TAG, location.toString());
-                makeUseIfNewLocation(location);
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-
-            }
-
-            @Override
-            public void onProviderEnabled(String provider) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) {
-
-            }
-        };
-        /*
-        To request location updates from the GPS provider, use GPS_PROVIDER instead of NETWORK_PROVIDER.
-        You can also request location updates from both the GPS and the Network Location Provider by
-        calling requestLocationUpdates() twice—once for NETWORK_PROVIDER and once for GPS_PROVIDER.
-         */
-        requestLocationAccess();
-
-        try {
-            if (isLocationAccessAllowed(this)) {
-                //https://developer.android.com/guide/topics/location/strategies.html#Permission
-                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-
-            }
-        }catch (SecurityException e){
-            Log.d(TAG, "Virhe: Sovelluksella ei ollut oikeuksia lokaatioon");
-        }
-
+        buildGoogleApiClient();
 
     }
+    /**
+     * Builds a GoogleApiClient. Uses the addApi() method to request the LocationServices API.
+     */
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+    }
+
     public void makeUseIfNewLocation(Location location){
         Toast.makeText(context, " tekstii", Toast.LENGTH_SHORT);
     }
@@ -95,5 +84,48 @@ public class MainActivity extends AppCompatActivity {
             // result of the request.
             return false;
         }
+    }
+    protected void onStart() {
+        mGoogleApiClient.connect();
+        super.onStart();
+    }
+
+    protected void onStop() {
+        mGoogleApiClient.disconnect();
+        super.onStop();
+    }
+
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.d(TAG, "onConnectionFailed -metodissa ollaan");
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        Log.d(TAG, " onConnected-metodissa ollaan");
+        try{
+            // Provides a simple way of getting a device's location and is well suited for
+            // applications that do not require a fine-grained location and that do not need location
+            // updates. Gets the best and most recent location currently available, which may be null
+            // in rare cases when a location is not available.
+            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+            if (mLastLocation != null) {
+                mLatitudeText.setText(String.format("%s: %f", mLatitudeLabel,
+                        mLastLocation.getLatitude()));
+                mLongitudeText.setText(String.format("%s: %f", mLongitudeLabel,
+                        mLastLocation.getLongitude()));
+            } else {
+                Toast.makeText(this, R.string.no_location_detected, Toast.LENGTH_LONG).show();
+            }
+        }catch (SecurityException e){
+            Log.d(TAG, "Virhe2 : Sovelluksella ei ollut oikeuksia lokaatioon");
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        Log.d(TAG, " onConnectionSuspended-metodissa ollaan");
+        mGoogleApiClient.connect();
     }
 }
