@@ -24,4 +24,13 @@
         android:layout_marginTop="24dp"
         android:textIsSelectable="true"
         android:textSize="16sp" />
+
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:onClick="naytaKartta"
+        android:text="Button" />
+
 </LinearLayout>

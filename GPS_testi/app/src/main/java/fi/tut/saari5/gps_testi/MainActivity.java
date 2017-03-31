@@ -3,6 +3,7 @@ package fi.tut.saari5.gps_testi;
 import android.Manifest;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -12,6 +13,8 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     protected TextView mLatitudeText;
     protected TextView mLongitudeText;
 
+    public static final String EXTRA_MESSAGE = "fi.tut.saari5.gps_testi.MESSAGE";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -127,5 +131,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public void onConnectionSuspended(int i) {
         Log.d(TAG, " onConnectionSuspended-metodissa ollaan");
         mGoogleApiClient.connect();
+    }
+    public void naytaKartta(View view){
+        Log.d(TAG, "nappulaa painettu");
+        Intent intent = new Intent(this, MapsActivity.class);
+        //EditText editText = (EditText) findViewById(R.id.editText);
+        String message = mLastLocation.getLatitude()+";"+mLastLocation.getLongitude();
+        Log.d(TAG, "viesti"+message);
+        intent.putExtra(EXTRA_MESSAGE, message);
+        startActivity(intent);
+
     }
 }
