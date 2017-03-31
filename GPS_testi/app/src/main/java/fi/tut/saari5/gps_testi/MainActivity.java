@@ -20,6 +20,7 @@ import android.widget.Toast;
  *
  */
 public class MainActivity extends AppCompatActivity {
+    private final String TAG="MainActivity";
     private Context context;
     private static final String[] PERMISSIONS_LOCATION = {Manifest.permission.ACCESS_FINE_LOCATION};
     @Override
@@ -33,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
         LocationListener locationListener=new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                Log.d("testii", location.toString());
+                Log.d(TAG, location.toString());
                 makeUseIfNewLocation(location);
             }
 
@@ -58,10 +59,16 @@ public class MainActivity extends AppCompatActivity {
         calling requestLocationUpdates() twice—once for NETWORK_PROVIDER and once for GPS_PROVIDER.
          */
         requestLocationAccess();
-        if(isLocationAccessAllowed(this)) {
-            //https://developer.android.com/guide/topics/location/strategies.html#Permission
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+
+        try {
+            if (isLocationAccessAllowed(this)) {
+                //https://developer.android.com/guide/topics/location/strategies.html#Permission
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+
+            }
+        }catch (SecurityException e){
+            Log.d(TAG, "Virhe: Sovelluksella ei ollut oikeuksia lokaatioon");
         }
 
 
@@ -74,13 +81,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public boolean requestLocationAccess( ) {
-        Log.d("requestLocationAccess", "requesting location access");
+        Log.d(TAG, "requesting location access");
         // Here, thisActivity is the current activity
         if (isLocationAccessAllowed(this)) {
-            Log.d("requestLocationAccess", "request already granted");
+            Log.d(TAG, "request already granted");
             return true;
         } else {
-            Log.d("requestLocationAccess", "requesting");
+            Log.d(TAG, "requesting");
             // No explanation needed, we can request the permission.
             this.requestPermissions(PERMISSIONS_LOCATION, 123);
             // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
